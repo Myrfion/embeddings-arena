@@ -1,0 +1,5 @@
+flask
+flask-socketio
+sentence-transformers
+umap-learn
+numpy

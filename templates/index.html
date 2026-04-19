@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Embedding Distance</title>
+    <script src="https://cdn.plot.ly/plotly-2.35.0.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: #0a0a0f;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        .header {
+            padding: 24px 32px 0;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #fff;
+            letter-spacing: -0.3px;
+        }
+
+        .header p {
+            font-size: 13px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 20px 32px;
+            flex-wrap: wrap;
+        }
+
+        input[type="text"] {
+            background: #141419;
+            border: 1px solid #2a2a35;
+            color: #fff;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 15px;
+            width: 200px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus {
+            border-color: #5b5bf0;
+        }
+
+        input[type="text"]::placeholder {
+            color: #444;
+        }
+
+        .vs {
+            color: #444;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        button {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.15s;
+        }
+
+        .btn-compare {
+            background: #5b5bf0;
+            color: #fff;
+        }
+
+        .btn-compare:hover {
+            background: #4a4ae0;
+        }
+
+        .btn-compare:disabled {
+            background: #2a2a45;
+            color: #555;
+            cursor: not-allowed;
+        }
+
+        .btn-toggle {
+            background: #1a1a24;
+            color: #888;
+            border: 1px solid #2a2a35;
+        }
+
+        .btn-toggle:hover {
+            color: #ccc;
+            border-color: #3a3a45;
+        }
+
+        .btn-toggle.active {
+            color: #5b5bf0;
+            border-color: #5b5bf0;
+        }
+
+        .stats {
+            display: flex;
+            gap: 24px;
+            padding: 0 32px 16px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .stats.visible {
+            opacity: 1;
+        }
+
+        .stat {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 22px;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .stat-value.similarity {
+            color: #5bf09b;
+        }
+
+        .stat-value.distance {
+            color: #f05b7a;
+        }
+
+        #chart {
+            width: 100%;
+            height: calc(100vh - 200px);
+            min-height: 500px;
+        }
+
+        .loading {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            color: #666;
+            font-size: 13px;
+        }
+
+        .loading.visible {
+            display: flex;
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #333;
+            border-top-color: #5b5bf0;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Word Embedding Distance</h1>
+        <p>Compare how close two concepts are in embedding space (all-MiniLM-L6-v2)</p>
+    </div>
+
+    <div class="controls">
+        <input type="text" id="word1" placeholder="first word" autofocus>
+        <span class="vs">vs</span>
+        <input type="text" id="word2" placeholder="second word">
+        <button class="btn-compare" id="compareBtn" onclick="compare()">Compare</button>
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <span>Computing embeddings & projection...</span>
+        </div>
+        <div style="flex: 1"></div>
+        <button class="btn-toggle active" id="btn2d" onclick="setView('2d')">2D</button>
+        <button class="btn-toggle" id="btn3d" onclick="setView('3d')">3D</button>
+    </div>
+
+    <div class="stats" id="stats">
+        <div class="stat">
+            <span class="stat-label">Similarity</span>
+            <span class="stat-value similarity" id="similarityVal">—</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">Distance</span>
+            <span class="stat-value distance" id="distanceVal">—</span>
+        </div>
+    </div>
+
+    <div id="chart"></div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

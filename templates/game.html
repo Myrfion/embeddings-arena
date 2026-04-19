@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Word Distance</title>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.35.0.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: #0a0a0f;
+            color: #e0e0e0;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .view { display: none; flex-direction: column; flex: 1; }
+        .view.active { display: flex; }
+
+        /* ── Home ── */
+        #home {
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            gap: 24px;
+        }
+
+        .game-title {
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            text-align: center;
+        }
+
+        .game-subtitle {
+            color: #666;
+            font-size: 13px;
+            text-align: center;
+            max-width: 320px;
+            line-height: 1.4;
+        }
+
+        .home-section {
+            width: 100%;
+            max-width: 340px;
+            background: #141419;
+            border-radius: 16px;
+            padding: 20px;
+        }
+
+        .home-section h3 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .home-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .home-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .divider {
+            text-align: center;
+            color: #333;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* ── Shared inputs/buttons ── */
+        input[type="text"] {
+            background: #1a1a24;
+            border: 1px solid #2a2a35;
+            color: #fff;
+            padding: 14px 18px;
+            border-radius: 12px;
+            font-size: 17px;
+            outline: none;
+            flex: 1;
+            min-width: 0;
+        }
+
+        input[type="text"]:focus { border-color: #5b5bf0; }
+        input[type="text"]::placeholder { color: #444; }
+
+        .btn {
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.15s;
+            -webkit-appearance: none;
+        }
+
+        .btn-primary { background: #5b5bf0; color: #fff; }
+        .btn-primary:hover { background: #4a4ae0; }
+        .btn-primary:active { transform: scale(0.97); }
+
+        .btn-start {
+            width: 100%;
+            max-width: 340px;
+            padding: 18px;
+            font-size: 18px;
+            background: #2d8a4e;
+            color: #fff;
+        }
+        .btn-start:hover { background: #247a42; }
+
+        /* ── Lobby ── */
+        #lobby {
+            align-items: center;
+            justify-content: flex-start;
+            padding: 24px;
+            gap: 16px;
+            overflow-y: auto;
+        }
+
+        .room-code-display {
+            text-align: center;
+        }
+
+        .room-code-label {
+            font-size: 12px;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .room-code {
+            font-size: 40px;
+            font-weight: 900;
+            letter-spacing: 6px;
+            color: #5b5bf0;
+            cursor: pointer;
+            user-select: all;
+        }
+
+        .room-code-hint {
+            font-size: 11px;
+            color: #444;
+            margin-top: 2px;
+        }
+
+        /* Config panel */
+        .config-panel {
+            width: 100%;
+            max-width: 340px;
+        }
+
+        .config-section {
+            margin-bottom: 14px;
+        }
+
+        .config-section h3 {
+            font-size: 12px;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .mode-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: #141419;
+            border-radius: 8px;
+            margin-bottom: 4px;
+        }
+
+        .mode-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .mode-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .mode-name {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .mode-desc {
+            font-size: 11px;
+            color: #555;
+        }
+
+        .toggle {
+            width: 44px;
+            height: 24px;
+            background: #2a2a35;
+            border-radius: 12px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+
+        .toggle.on { background: #2d8a4e; }
+
+        .toggle::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            border-radius: 50%;
+            transition: transform 0.2s;
+        }
+
+        .toggle.on::after { transform: translateX(20px); }
+
+        .stepper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stepper button {
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            background: #1a1a24;
+            color: #aaa;
+            border: 1px solid #2a2a35;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+
+        .stepper button:active { background: #2a2a35; }
+
+        .stepper-val {
+            width: 24px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 16px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .stepper-unit {
+            font-size: 13px;
+            color: #555;
+        }
+
+        .player-list { width: 100%; max-width: 340px; }
+
+        .player-list h3 {
+            font-size: 13px;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+
+        .player-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            background: #141419;
+            border-radius: 8px;
+            margin-bottom: 6px;
+        }
+
+        .player-name { font-weight: 500; }
+        .player-score { font-variant-numeric: tabular-nums; color: #5bf09b; font-weight: 600; }
+
+        /* ── Countdown ── */
+        #countdown {
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            gap: 12px;
+        }
+
+        .countdown-num {
+            font-size: 120px;
+            font-weight: 900;
+            color: #5b5bf0;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        .countdown-label {
+            font-size: 16px;
+            color: #555;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.7; }
+        }
+
+        /* ── Playing ── */
+        #playing {
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            gap: 12px;
+        }
+
+        .round-info {
+            font-size: 13px;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .round-type-badge { font-weight: 700; letter-spacing: 0.5px; }
+        .round-type-badge.furthest { color: #f05b7a; }
+        .round-type-badge.closest { color: #5bf09b; }
+        .round-type-badge.midpoint { color: #c05bf0; }
+        .round-type-badge.bullseye { color: #f0e05b; }
+        .round-type-badge.blind { color: #f0a05b; }
+        .round-type-badge.double_down { color: #5ba0f0; }
+
+        .target-label { font-size: 14px; color: #888; }
+
+        .target-word {
+            font-size: 44px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            color: #f05b7a;
+            text-align: center;
+            line-height: 1.1;
+        }
+
+        .target-word2 {
+            font-size: 44px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            color: #5ba0f0;
+            text-align: center;
+            line-height: 1.1;
+        }
+
+        .target-ampersand {
+            color: #444;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .bullseye-info { font-size: 16px; color: #888; }
+        .bullseye-num { font-size: 28px; font-weight: 800; color: #f0e05b; }
+
+        .blind-category {
+            font-size: 16px;
+            color: #f0a05b;
+            font-style: italic;
+        }
+
+        .timer {
+            font-size: 64px;
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+            color: #fff;
+            line-height: 1;
+        }
+
+        .timer.urgent { color: #f05b7a; }
+
+        .answer-form {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .answer-form input { font-size: 20px; padding: 14px 18px; }
+
+        .submitted-word { font-size: 14px; color: #5bf09b; min-height: 20px; }
+
+        .instruction { font-size: 13px; color: #555; text-align: center; }
+
+        /* ── Results ── */
+        #results {
+            padding: 16px;
+            gap: 12px;
+            align-items: center;
+            overflow-y: auto;
+        }
+
+        .results-header { text-align: center; }
+        .results-header h2 { font-size: 18px; font-weight: 700; }
+
+        .reveal-word {
+            font-size: 16px;
+            color: #f0a05b;
+            text-align: center;
+        }
+
+        .winner-banner {
+            font-size: 22px;
+            font-weight: 700;
+            color: #f0e05b;
+            text-align: center;
+        }
+
+        .results-table { width: 100%; max-width: 400px; }
+
+        .result-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: #141419;
+            border-radius: 10px;
+            margin-bottom: 4px;
+        }
+
+        .result-row.winner {
+            background: #1a2a1f;
+            border: 1px solid #2d8a4e44;
+        }
+
+        .result-rank { font-size: 18px; font-weight: 700; color: #444; width: 24px; text-align: center; }
+        .result-row.winner .result-rank { color: #f0e05b; }
+        .result-info { flex: 1; }
+        .result-name { font-weight: 600; font-size: 14px; }
+        .result-word { font-size: 14px; color: #bbb; font-weight: 500; }
+        .result-word em { color: #555; font-style: italic; }
+        .result-distance { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; color: #f05b7a; }
+
+        .btn-next {
+            padding: 14px 28px;
+            font-size: 16px;
+            background: #2d8a4e;
+            color: #fff;
+        }
+        .btn-next:hover { background: #247a42; }
+
+        #resultChart {
+            width: 100%;
+            max-width: 500px;
+            height: 280px;
+        }
+
+        .scoreboard { width: 100%; max-width: 400px; }
+
+        .scoreboard h3 {
+            font-size: 12px;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        /* ── Game Over ── */
+        #gameOver {
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            gap: 20px;
+        }
+
+        .game-over-title {
+            font-size: 32px;
+            font-weight: 800;
+            color: #f0e05b;
+        }
+
+        .game-over-winner {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .final-scores { width: 100%; max-width: 340px; }
+
+        .final-score-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: #141419;
+            border-radius: 10px;
+            margin-bottom: 6px;
+        }
+
+        .final-score-row:first-child {
+            background: #1a2a1f;
+            border: 1px solid #2d8a4e44;
+        }
+
+        .final-score-name { font-weight: 600; font-size: 16px; }
+        .final-score-pts { font-size: 20px; font-weight: 800; color: #5bf09b; font-variant-numeric: tabular-nums; }
+
+        .btn-play-again {
+            width: 100%;
+            max-width: 340px;
+            padding: 18px;
+            font-size: 18px;
+            background: #5b5bf0;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <!-- HOME -->
+    <div id="home" class="view active">
+        <div class="game-title">Word Distance</div>
+        <div class="game-subtitle">
+            Type words to score points based on their distance in embedding space.
+        </div>
+
+        <div class="home-section">
+            <h3>Create Game</h3>
+            <div class="home-form">
+                <input type="text" id="createNameInput" placeholder="Your name" maxlength="20" autocomplete="off">
+                <button class="btn btn-primary" onclick="createGame()">Create</button>
+            </div>
+        </div>
+
+        <div class="divider">or</div>
+
+        <div class="home-section">
+            <h3>Join Game</h3>
+            <div class="home-form">
+                <input type="text" id="joinNameInput" placeholder="Your name" maxlength="20" autocomplete="off">
+                <div class="home-row">
+                    <input type="text" id="joinCodeInput" placeholder="Room code" maxlength="6" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase; letter-spacing:2px; text-align:center;">
+                    <button class="btn btn-primary" onclick="joinGame()">Join</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOBBY -->
+    <div id="lobby" class="view">
+        <div class="game-title">Word Distance</div>
+
+        <div class="room-code-display">
+            <div class="room-code-label">Room Code</div>
+            <div class="room-code" id="roomCode" onclick="copyCode()">-----</div>
+            <div class="room-code-hint">tap to copy</div>
+        </div>
+
+        <div class="player-list" id="lobbyPlayers"></div>
+
+        <div class="config-panel" id="configPanel">
+            <div class="config-section">
+                <h3>Modes</h3>
+                <div id="modeToggles"></div>
+            </div>
+            <div class="config-section">
+                <h3>Settings</h3>
+                <div class="mode-row">
+                    <div class="mode-info">
+                        <span class="mode-name">Total rounds</span>
+                    </div>
+                    <div class="stepper">
+                        <button onclick="adjustRounds(-1)">-</button>
+                        <span class="stepper-val" id="totalRoundsVal">7</span>
+                        <button onclick="adjustRounds(1)">+</button>
+                    </div>
+                </div>
+                <div class="mode-row">
+                    <div class="mode-info">
+                        <span class="mode-name">Round time</span>
+                    </div>
+                    <div class="stepper">
+                        <button onclick="adjustTime(-5)">-</button>
+                        <span class="stepper-val" id="roundTimeVal">20</span><span class="stepper-unit">s</span>
+                        <button onclick="adjustTime(5)">+</button>
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-start" onclick="startGame()">Start Game</button>
+        </div>
+    </div>
+
+    <!-- COUNTDOWN -->
+    <div id="countdown" class="view">
+        <div class="round-info">Round <span id="cdRoundNum">1</span>/<span id="cdRoundTotal">?</span> · <span id="cdRoundType" class="round-type-badge">FURTHEST</span></div>
+        <div class="countdown-num" id="countdownNum">5</div>
+        <div class="countdown-label">get ready...</div>
+    </div>
+
+    <!-- PLAYING -->
+    <div id="playing" class="view">
+        <div class="round-info">Round <span id="roundNum">1</span>/<span id="roundTotal">?</span> · <span id="roundType" class="round-type-badge">FURTHEST</span></div>
+        <div class="target-label" id="targetLabel">get far from</div>
+        <div class="target-word" id="targetWord">—</div>
+        <div class="target-ampersand" id="targetAmp" style="display:none">&</div>
+        <div class="target-word target-word2" id="targetWord2" style="display:none">—</div>
+        <div class="blind-category" id="blindCategory" style="display:none"></div>
+        <div class="bullseye-info" id="bullseyeInfo" style="display:none">
+            target distance: <span id="bullseyeTarget" class="bullseye-num">0.00</span>
+        </div>
+        <div class="timer" id="timer">20</div>
+        <div class="answer-form">
+            <input type="text" id="answerInput" placeholder="your word..." autocomplete="off" autocapitalize="none">
+            <button class="btn btn-primary" onclick="submitAnswer()">Go</button>
+        </div>
+        <div class="submitted-word" id="submittedWord"></div>
+        <div class="instruction" id="instruction"></div>
+    </div>
+
+    <!-- RESULTS -->
+    <div id="results" class="view">
+        <div class="results-header">
+            <h2>Round <span id="resultRoundNum">1</span>/<span id="resultRoundTotal">?</span></h2>
+        </div>
+        <div class="reveal-word" id="revealWord" style="display:none"></div>
+        <div class="winner-banner" id="winnerBanner"></div>
+        <div class="results-table" id="resultsTable"></div>
+        <div id="resultChart"></div>
+        <button class="btn btn-next" id="nextRoundBtn" onclick="nextRound()">Next Round</button>
+        <div class="scoreboard" id="scoreboard"></div>
+    </div>
+
+    <!-- GAME OVER -->
+    <div id="gameOver" class="view">
+        <div class="game-over-title">Game Over!</div>
+        <div class="game-over-winner" id="gameOverWinner"></div>
+        <div class="final-scores" id="finalScores"></div>
+        <button class="btn btn-play-again" onclick="playAgain()">Play Again</button>
+    </div>
+
+    <script src="/static/game.js"></script>
+</body>
+</html>
