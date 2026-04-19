@@ -50,7 +50,7 @@ const TUTORIAL_MODES = [
     { name: "Closest", color: "#5bf09b", rule: "Get as close as possible (but not the same word)" },
     { name: "Midpoint", color: "#c05bf0", rule: "Land equally between two target words" },
     { name: "Bullseye", color: "#f0e05b", rule: "Hit an exact target distance" },
-    { name: "Blind", color: "#f0a05b", rule: "The target word is hidden — you only see its category" },
+    // { name: "Blind", color: "#f0a05b", rule: "The target word is hidden — you only see its category" },
     { name: "Double Down", color: "#5ba0f0", rule: "Get far from both target words at once" },
 ];
 

@@ -10,7 +10,7 @@ const MODES = [
     { id: "closest", name: "Closest", color: "#5bf09b", desc: "Get close" },
     { id: "midpoint", name: "Midpoint", color: "#c05bf0", desc: "Between two" },
     { id: "bullseye", name: "Bullseye", color: "#f0e05b", desc: "Hit exact dist" },
-    { id: "blind", name: "Blind", color: "#f0a05b", desc: "Category only" },
+    // { id: "blind", name: "Blind", color: "#f0a05b", desc: "Category only" },
     { id: "double_down", name: "Double Down", color: "#5ba0f0", desc: "Far from both" },
 ];
 
