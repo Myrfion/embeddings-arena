@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Word Distance</title>
+    <title>Embeddings Arena</title>
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script src="https://cdn.plot.ly/plotly-2.35.0.min.js"></script>
     <style>
@@ -522,15 +522,231 @@
             background: #5b5bf0;
             color: #fff;
         }
+
+        .btn-how {
+            background: none;
+            border: 1px solid #2a2a35;
+            color: #888;
+            padding: 10px 20px;
+            font-size: 14px;
+        }
+        .btn-how:hover { border-color: #5b5bf0; color: #bbb; }
+
+        /* ── Tutorial Modal ── */
+        .tutorial-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: rgba(0, 0, 0, 0.85);
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .tutorial-modal {
+            background: #141419;
+            border: 1px solid #2a2a35;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 520px;
+            padding: 24px;
+            max-height: 90dvh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        @media (max-width: 560px) {
+            .tutorial-modal {
+                max-width: 380px;
+                padding: 20px;
+            }
+        }
+
+        .tutorial-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #1a1a24;
+            border: 1px solid #2a2a35;
+            color: #888;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+        }
+        .tutorial-close:hover { color: #fff; }
+
+        .tutorial-dots {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .tutorial-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #2a2a35;
+            transition: background 0.2s;
+        }
+        .tutorial-dot.active { background: #5b5bf0; }
+
+        #tutorialChart {
+            width: 100%;
+            height: 300px;
+            margin-bottom: 12px;
+        }
+
+        @media (max-width: 560px) {
+            #tutorialChart { height: 220px; }
+        }
+
+        .tutorial-content h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .tutorial-content p {
+            font-size: 14px;
+            color: #aaa;
+            line-height: 1.5;
+            margin-bottom: 6px;
+        }
+
+        .tutorial-nav {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 16px;
+            gap: 12px;
+        }
+
+        .tutorial-btn-prev {
+            background: #1a1a24;
+            border: 1px solid #2a2a35;
+            color: #888;
+            flex: 1;
+        }
+        .tutorial-btn-prev:hover { color: #bbb; }
+
+        .tutorial-btn-next {
+            flex: 1;
+        }
+
+        .tutorial-modes {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .tutorial-mode-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .tutorial-mode-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-top: 4px;
+            flex-shrink: 0;
+        }
+
+        .tutorial-mode-name {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .tutorial-mode-rule {
+            font-size: 12px;
+            color: #888;
+            line-height: 1.3;
+        }
+
+        .tutorial-embed-example {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            background: #1a1a24;
+            border-radius: 8px;
+            margin: 6px 0;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+        }
+
+        .tutorial-embed-word {
+            font-size: 15px;
+            font-weight: 700;
+            color: #5b5bf0;
+            white-space: nowrap;
+        }
+
+        .tutorial-embed-arrow {
+            color: #444;
+            font-size: 14px;
+        }
+
+        .tutorial-embed-vec {
+            font-size: 12px;
+            color: #777;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .tutorial-pairs {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .tutorial-pair {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .tutorial-pair.close {
+            background: #1a2a1f;
+            border: 1px solid #2d8a4e44;
+            color: #5bf09b;
+        }
+
+        .tutorial-pair.far {
+            background: #2a1a1f;
+            border: 1px solid #8a2d4e44;
+            color: #f05b7a;
+        }
+
+        .tutorial-pair-label {
+            font-size: 11px;
+            font-weight: 400;
+            color: #666;
+        }
     </style>
 </head>
 <body>
     <!-- HOME -->
     <div id="home" class="view active">
-        <div class="game-title">Word Distance</div>
+        <div class="game-title">Embeddings Arena</div>
         <div class="game-subtitle">
             Type words to score points based on their distance in embedding space.
         </div>
+        <button class="btn btn-how" onclick="openTutorial()">How to Play</button>
 
         <div class="home-section">
             <h3>Create Game</h3>
@@ -556,7 +772,7 @@
 
     <!-- LOBBY -->
     <div id="lobby" class="view">
-        <div class="game-title">Word Distance</div>
+        <div class="game-title">Embeddings Arena</div>
 
         <div class="room-code-display">
             <div class="room-code-label">Room Code</div>
@@ -646,6 +862,21 @@
         <button class="btn btn-play-again" onclick="playAgain()">Play Again</button>
     </div>
 
+    <!-- TUTORIAL -->
+    <div id="tutorialOverlay" class="tutorial-overlay">
+        <div class="tutorial-modal">
+            <button class="tutorial-close" onclick="closeTutorial()">&times;</button>
+            <div class="tutorial-dots" id="tutorialDots"></div>
+            <div id="tutorialChart"></div>
+            <div class="tutorial-content" id="tutorialContent"></div>
+            <div class="tutorial-nav">
+                <button class="btn tutorial-btn-prev" id="tutorialPrev" onclick="tutorialPrev()">Back</button>
+                <button class="btn btn-primary tutorial-btn-next" id="tutorialNext" onclick="tutorialNext()">Next</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/tutorial.js"></script>
     <script src="/static/game.js"></script>
 </body>
 </html>
