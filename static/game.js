@@ -300,7 +300,28 @@ socket.on("answer_confirmed", (data) => {
     document.getElementById("submittedWord").textContent = `Submitted: ${data.word}`;
 });
 
+let calcStepTimeout1 = null;
+let calcStepTimeout2 = null;
+
+socket.on("calculating", () => {
+    clearInterval(timerInterval);
+    showView("calculating");
+    document.getElementById("calcStep1").className = "calc-step active";
+    document.getElementById("calcStep2").className = "calc-step";
+    document.getElementById("calcStep3").className = "calc-step";
+    calcStepTimeout1 = setTimeout(() => {
+        document.getElementById("calcStep1").className = "calc-step done";
+        document.getElementById("calcStep2").className = "calc-step active";
+    }, 1500);
+    calcStepTimeout2 = setTimeout(() => {
+        document.getElementById("calcStep2").className = "calc-step done";
+        document.getElementById("calcStep3").className = "calc-step active";
+    }, 3000);
+});
+
 socket.on("round_end", (data) => {
+    clearTimeout(calcStepTimeout1);
+    clearTimeout(calcStepTimeout2);
     clearInterval(timerInterval);
     showView("results");
 

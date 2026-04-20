@@ -230,6 +230,9 @@ def start_round(code):
 
 
 def end_round(code):
+    import time
+    t_start = time.time()
+
     room = rooms.get(code)
     if not room:
         return
@@ -240,6 +243,8 @@ def end_round(code):
     round_type = game["round_type"]
     higher_is_better = round_type in ("furthest", "blind", "double_down")
 
+    socketio.emit("calculating", to=code)
+
     results = []
     answer_words = []
     answer_sids = []
@@ -249,10 +254,12 @@ def end_round(code):
             answer_words.append(word)
             answer_sids.append(sid)
 
+    t_embed = time.time()
     if answer_words:
         answer_embeddings = model.encode(answer_words)
     else:
         answer_embeddings = []
+    print(f"[Room {code}] Embedding {len(answer_words)} words: {time.time() - t_embed:.3f}s")
 
     for i, sid in enumerate(answer_sids):
         word = game["answers"][sid]
@@ -315,7 +322,9 @@ def end_round(code):
     else:
         winner_names = []
 
+    t_viz = time.time()
     viz_data = build_viz(code, answer_words, answer_embeddings if len(answer_words) > 0 else [])
+    print(f"[Room {code}] UMAP visualization: {time.time() - t_viz:.3f}s")
 
     clean_results = [
         {"name": r["name"], "word": r["word"], "distance": r["distance"],
@@ -338,6 +347,7 @@ def end_round(code):
         "viz_data": viz_data,
         "is_last_round": rounds_remaining == 0,
     }, to=code)
+    print(f"[Room {code}] Round {game['round_num']} total: {time.time() - t_start:.3f}s")
     broadcast_players(code)
 
 
