@@ -67,6 +67,12 @@ print("Computing reference embeddings...")
 ref_embeddings = model.encode(ref_words)
 print(f"Computed embeddings for {len(ref_words)} reference words.")
 
+print("Warming up UMAP (JIT compilation)...")
+import umap
+_warmup_reducer = umap.UMAP(n_components=2, n_neighbors=5, min_dist=0.1, random_state=42)
+_warmup_reducer.fit_transform(ref_embeddings[:10])
+print("UMAP ready.")
+
 TARGET_POOL = list(ref_words)
 ALL_MODES = ["furthest", "closest", "midpoint", "bullseye", "blind", "double_down"]
 
